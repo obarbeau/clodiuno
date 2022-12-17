@@ -1,0 +1,4 @@
+;; Clojure API for Arduino
+{:deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        rxtx22/rxtx22 {:mvn/version "1.0.6"}}
+ :paths ["src" "resources"]}
