@@ -16,8 +16,8 @@
 ;;start receiving data for photo-pin
 (enable-pin board :analog photo-pin)
 
-(doseq [_ (range 1000000)] 
-  (let [val (analog-read board photo-pin)] 
+(doseq [_ (range 1000000)]
+  (let [val (analog-read board photo-pin)]
     (if (> val threshold)
       (digital-write board led-pin HIGH)
       (digital-write board led-pin LOW))))

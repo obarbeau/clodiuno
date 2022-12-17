@@ -1,10 +1,10 @@
 (ns clodiuno.wishield
   #^{:author "Nurullah Akkaya",
      :doc "WiShield Library for Clojure."}
-  (:use clodiuno.core)
+    (:use clodiuno.core)
   (:import (java.text DecimalFormat)
-	   (java.net Socket)
-	   (java.io PrintWriter InputStreamReader BufferedReader)))
+           (java.net Socket)
+           (java.io PrintWriter InputStreamReader BufferedReader)))
 
 ;;Pins 10,11,12,13 are "mandatory" for SPI communications 
 ;;as is pin 2 OR 8 depending on your jumper setting.
@@ -19,29 +19,29 @@
     (.flush))
   (.readLine (:in conn)))
 
-(defmethod enable-pin :wishield [board type pin])
+(defmethod enable-pin :wishield [_board _type _pin])
 
-(defmethod disable-pin :wishield [board type pin])
+(defmethod disable-pin :wishield [_board _type _pin])
 
 (defmethod pin-mode :wishield [board pin mode]
   (let [pin (.format pin-format pin)
-	mode (cond (= mode INPUT) "i"
-		   (= mode OUTPUT) "o"
-		   (= mode ANALOG) "a"
-		   (= mode PWM) "p"
-		   (= mode SERVO) "s"
-		   :default (throw (Exception. "Invalid Mode.")))]
+        mode (cond (= mode INPUT) "i"
+                   (= mode OUTPUT) "o"
+                   (= mode ANALOG) "a"
+                   (= mode PWM) "p"
+                   (= mode SERVO) "s"
+                   :else (throw (Exception. "Invalid Mode.")))]
     (send-command board (str "pm" pin mode))))
 
 (defmethod digital-write :wishield [board pin value]
   (let [pin (.format pin-format pin)
-	value (cond (= value HIGH) "h"
-		   (= value LOW) "l"
-		   :default (throw (Exception. "Invalid Value.")))]
+        value (cond (= value HIGH) "h"
+                    (= value LOW) "l"
+                    :else (throw (Exception. "Invalid Value.")))]
     (send-command board (str "dw" pin value))))
 
 (defmethod analog-write :wishield [board pin value]
-  (send-command 
+  (send-command
    board (str "aw" (.format pin-format pin) (.format pwm-format value))))
 
 (defmethod analog-read :wishield [board pin]
@@ -59,9 +59,9 @@
     (.close out)
     (.close socket)))
 
-(defmethod arduino :wishield [interface ip port]
+(defmethod arduino :wishield [_interface ip port]
   (let [socket (Socket. ip port)
-	in (BufferedReader. (InputStreamReader. (.getInputStream socket)))
-	out (PrintWriter. (.getOutputStream socket))]
+        in (BufferedReader. (InputStreamReader. (.getInputStream socket)))
+        out (PrintWriter. (.getOutputStream socket))]
     (.readLine in)
     {:interface :wishield :in in :out out :socket socket}))

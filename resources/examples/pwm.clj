@@ -13,7 +13,7 @@
 (pin-mode board 3 PWM)
 (pin-mode board 5 ANALOG)
 
-(while true 
-       (analog-write board 3 (map-int (analog-read board 5) 0 1023 0 255)))
+(while true
+  (analog-write board 3 (map-int (analog-read board 5) 0 1023 0 255)))
 
 ;;(close board)

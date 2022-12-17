@@ -11,9 +11,9 @@
 (pin-mode board 3 OUTPUT)
 (pin-mode board 6 INPUT)
 
-(while true 
-       (let [i (digital-read board 6)] 
-	 (println i)
-	 (digital-write board 3 i)))
+(while true
+  (let [i (digital-read board 6)]
+    (println i)
+    (digital-write board 3 i)))
 
 ;;(close board)

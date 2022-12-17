@@ -6,7 +6,7 @@
 
 (pin-mode board 13 OUTPUT)
 
-(doseq [_ (range 5)] 
+(doseq [_ (range 5)]
   (digital-write board 13 HIGH)
   (Thread/sleep 1000)
   (digital-write board 13 LOW)

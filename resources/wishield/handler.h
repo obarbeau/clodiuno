@@ -19,7 +19,7 @@ int cmdCmpr(char* msg, char* expected){
 char* setPinMode(char* msg){
   int pin = parsePin(msg);
   char mode = msg[4];
-  
+
   if (mode == 'o'){
     digitalWrite(pin, LOW); // disable PWM
     pinMode(pin, OUTPUT);
@@ -45,8 +45,8 @@ char* setPinMode(char* msg){
 char* setDigitalWrite(char* msg){
   int pin = parsePin(msg);
   char mode = msg[4];
-  
-  if (mode == 'h'){
+
+  if (mode ==  'h'){
     digitalWrite(pin, HIGH);
     return "OK\n";
   }else if (mode == 'l'){
@@ -62,7 +62,7 @@ char* setAnalogWrite(char* msg){
 
   if (servo_enabled[pin] == 1)
     servo[pin].write(atoi(val));
-  analogWrite(pin, atoi(val));  
+  analogWrite(pin, atoi(val));
 
   return "OK\n";
 }
