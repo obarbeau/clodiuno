@@ -4,7 +4,7 @@
  :paths ["src" "resources"]
  :aliases
  {:build {:deps {io.github.obarbeau/build-clj
-                 {:git/sha "749524da3eb25b4cd42e21dcf037f8eba2301b5f"}}
+                 {:git/sha "bb7d3f12381d84b9e230d8497d4d09b9fd6971ab"}}
           :exec-args {:lib io.github.obarbeau/clodiuno
                       :main-ns clodiuno.core
                       :version "0.0.4-SNAPSHOT"}}}}

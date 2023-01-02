@@ -4,7 +4,12 @@ To install, merely add the following to your `project.clj`.
 
 ```clojure
 [clodiuno "0.0.4-SNAPSHOT"]
+```
 
+Or, if using `deps.edn`:
+
+```clojure
+io.github.obarbeau/clodiuno {:git/sha "<insert-last-sha-here>"}
 ```
 
 For examples, check out the [project homepage](http://nakkaya.com/clodiuno.html).
