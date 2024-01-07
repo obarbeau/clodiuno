@@ -1,10 +1,18 @@
 ;; Clojure API for Arduino
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        rxtx22/rxtx22       {:mvn/version "1.0.6"}}
+        ;; installed by me
+        org.rxtx/rxtx       {:mvn/version "2.2pre2"}}
  :paths ["src" "resources"]
  :aliases
  {:build {:deps {io.github.obarbeau/build-clj
-                 {:git/sha "bb7d3f12381d84b9e230d8497d4d09b9fd6971ab"}}
+                 {#_#_:git/sha "bb7d3f12381d84b9e230d8497d4d09b9fd6971ab"
+                  :local/root "../../tools/build-clj"}}
           :exec-args {:lib io.github.obarbeau/clodiuno
                       :main-ns clodiuno.core
-                      :version "0.0.4-SNAPSHOT"}}}}
+                      :version "0.0.4-SNAPSHOT"}}
+  :usb-port {:jvm-opts [;;"-Dgnu.io.rxtx.SerialPorts=/dev/ttyACM0"
+                        "-Dgnu.io.rxtx.SerialPorts=/tmp/ttyFake0"
+                        ;; gnu.io.CommPortIdentifier
+                        ;; requires /usr/lib/jni/librxtxSerial-<version>.so
+                        "-Djava.library.path=/usr/lib/jni"
+                        "-Dgnu.io.log.mode=PRINT_MODE"]}}}
