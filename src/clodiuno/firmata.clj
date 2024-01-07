@@ -3,7 +3,7 @@
   #^{:author "Nurullah Akkaya",
      :doc "Firmata Library for Clojure."}
     (:use clodiuno.core)
-  (:import (java.io InputStream)
+  (:import (java.io InputStream OutputStream)
            (gnu.io SerialPort CommPortIdentifier
                    SerialPortEventListener SerialPortEvent
                    NoSuchPortException)))
@@ -51,7 +51,6 @@
 (def I2C-READ-WRITE-MODE-MASK    2r00011000)
 (def I2C-10BIT-ADDRESS-MODE-MASK 2r00100000)
 
-
 (def arduino-port-count 7)
 
 (defn- byte [v]
@@ -66,7 +65,7 @@
   [port-name]
   (or (when-let [port (->> (CommPortIdentifier/getPortIdentifiers)
                            enumeration-seq
-                           (filter #(= port-name (.getName %)))
+                           (filter #(= port-name (.getName ^CommPortIdentifier %)))
                            first)]
         port)
       (throw (NoSuchPortException.))))
@@ -74,7 +73,7 @@
 (defn- open
   "Open serial interface."
   [identifier baudrate]
-  (doto (.open identifier "clojure" 1)
+  (doto (.open ^CommPortIdentifier identifier "clojure" 1)
     (.setSerialPortParams baudrate
                           SerialPort/DATABITS_8
                           SerialPort/STOPBITS_1
@@ -89,14 +88,15 @@
   (proxy [SerialPortEventListener] []
     (serialEvent
       [event]
-      (when (= (.getEventType event) SerialPortEvent/DATA_AVAILABLE)
+      (println ".getEventType=" (.getEventType ^SerialPortEvent event))
+      (when (= (.getEventType ^SerialPortEvent event) SerialPortEvent/DATA_AVAILABLE)
         (f)))))
 
 (defn- write-bytes [conn & bs]
   (let [out (.getOutputStream (:port @conn))]
     (doseq [b bs]
-      (.write out b))
-    (.flush out)))
+      (.write ^OutputStream out b))
+    (.flush ^OutputStream out)))
 
 (defn- lsb [b]
   (bit-and b 0x7F))
@@ -210,14 +210,13 @@
 (defmethod i2c-read :firmata [conn slave-addr register]
   (get-in @conn [:i2c slave-addr register]))
 
-
-(defn- read-multibyte [in]
+(defn- read-multibyte [^InputStream in]
   (let [lsb (.read in)
         msb (.read in)
         val (bit-or (bit-shift-left msb 7) lsb)]
     [lsb msb val]))
 
-(defn- read-to-sysex-end [in]
+(defn- read-to-sysex-end [^InputStream in]
   (loop [buffer    []]
     (let [b (.read in)]
       (if (= b END-SYSEX)
@@ -227,7 +226,7 @@
 (defn- multibytes-to-ints [list]
   (for [[lsb msb] (partition 2 list)] (bytes-to-int lsb msb)))
 
-(defn- handle-sysex [conn in]
+(defn- handle-sysex [conn ^InputStream in]
   (let [cmd (.read in)]
     (cond
       (= cmd REPORT-FIRMWARE) (let [major-version (.read in)
@@ -256,9 +255,10 @@
 
 (defn- process-input
   "Parse input from firmata."
-  [conn in]
+  [conn ^InputStream in]
   (while (> (.available in) 2)
     (let [data (.read in)]
+      (println "data=" data)
       (cond
         (= (bit-and data 0xF0) ANALOG-MESSAGE) (let [pin (bit-and data 0x0F)
                                                      [_ _ val] (read-multibyte in)]
@@ -272,11 +272,12 @@
 
         (= data START-SYSEX) (handle-sysex conn in)))))
 
-
-(defmethod arduino :firmata [_type port & {:keys [baudrate msg-callback] :or {baudrate 57600}}]
+(defmethod arduino :firmata [type port & {:keys [baudrate msg-callback] :or {baudrate 57600}}]
+  (println "in firmata normal type=" type "port=" port)
   (let [port (open (port-identifier port) baudrate)
-        conn (ref {:port port :interface :firmata})]
+        conn (ref {:port port :interface type})]
 
+    (println "port=" port "type=" (type port))
     (doto port
       (.addEventListener (listener #(process-input conn (.getInputStream (:port @conn)))))
       (.notifyOnDataAvailable true))
@@ -296,3 +297,30 @@
     (assoc-in! conn [:callbacks] {:msg msg-callback})
 
     conn))
+
+(comment
+  (def fake-arduino (arduino :firmata "/tmp/ttyFake0"))
+  @fake-arduino
+  (close fake-arduino)
+
+  (pin-mode fake-arduino 0 INPUT)
+
+  (def identifier (port-identifier "/tmp/ttyFake0"))
+  (def port (.open ^CommPortIdentifier identifier "clojure" 1))
+  (.getBaudRate port)
+  (def baudrate 115200)
+
+  (def conn (ref {:port port :interface :firmata}))
+
+  (doto port
+    (.setSerialPortParams baudrate
+                          SerialPort/DATABITS_8
+                          SerialPort/STOPBITS_1
+                          SerialPort/PARITY_NONE)
+    (.addEventListener (listener #(process-input conn (.getInputStream (:port @conn)))))
+    (.notifyOnDataAvailable true))
+
+  (write-bytes conn REPORT-VERSION)
+
+  ;;
+  )
