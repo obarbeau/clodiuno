@@ -4,7 +4,7 @@
      :doc "Firmata Library for Clojure."}
     (:use clodiuno.core)
   (:import (java.io InputStream OutputStream)
-           (gnu.io SerialPort CommPortIdentifier
+           (gnu.io SerialPort RXTXPort CommPortIdentifier
                    SerialPortEventListener SerialPortEvent
                    NoSuchPortException)))
 
@@ -73,14 +73,14 @@
 (defn- open
   "Open serial interface."
   [identifier baudrate]
-  (doto (.open ^CommPortIdentifier identifier "clojure" 1)
+  (doto ^RXTXPort (.open ^CommPortIdentifier identifier "clojure" 1)
     (.setSerialPortParams baudrate
                           SerialPort/DATABITS_8
                           SerialPort/STOPBITS_1
                           SerialPort/PARITY_NONE)))
 
 (defmethod close :firmata [conn]
-  (.close (:port @conn)))
+  (.close ^RXTXPort (:port @conn)))
 
 (defn- listener
   "f will be called whenever there is data available on the stream."
@@ -88,14 +88,13 @@
   (proxy [SerialPortEventListener] []
     (serialEvent
       [event]
-      (println ".getEventType=" (.getEventType ^SerialPortEvent event))
       (when (= (.getEventType ^SerialPortEvent event) SerialPortEvent/DATA_AVAILABLE)
         (f)))))
 
 (defn- write-bytes [conn & bs]
-  (let [out (.getOutputStream (:port @conn))]
+  (let [out (.getOutputStream ^RXTXPort (:port @conn))]
     (doseq [b bs]
-      (.write ^OutputStream out b))
+      (.write ^OutputStream out ^int b))
     (.flush ^OutputStream out)))
 
 (defn- lsb [b]
@@ -118,7 +117,7 @@
   (map #(bit-and (bit-shift-right n %) 1) (range 8)))
 
 (defn- numb [bits]
-  (int (BigInteger. (apply str bits) 2)))
+  (int (java.math.BigInteger. ^String (apply str bits) ^int 2)))
 
 (defn- assoc-in! [r ks v]
   (dosync (alter r assoc-in ks v)))
@@ -277,9 +276,9 @@
   (let [port (open (port-identifier port) baudrate)
         conn (ref {:port port :interface type})]
 
-    (println "port=" port "type=" (type port))
-    (doto port
-      (.addEventListener (listener #(process-input conn (.getInputStream (:port @conn)))))
+    (println "port=" port "baudrate=" baudrate)
+    (doto ^RXTXPort port
+      (.addEventListener (listener #(process-input conn (.getInputStream ^RXTXPort (:port @conn)))))
       (.notifyOnDataAvailable true))
 
     (write-bytes conn REPORT-VERSION)
@@ -299,19 +298,20 @@
     conn))
 
 (comment
-  (def fake-arduino (arduino :firmata "/tmp/ttyFake0"))
+  (def fake-arduino (arduino :firmata "/tmp/ttyFake0" :baudrate 110))
   @fake-arduino
-  (close fake-arduino)
-
+  (write-bytes (ref {:port (:port @fake-arduino) :interface :firmata}) REPORT-VERSION)
+  (enable-pin fake-arduino :analog 2)
   (pin-mode fake-arduino 0 INPUT)
+  (pin-mode fake-arduino 0 OUTPUT)
+  (pin-mode fake-arduino 10 OUTPUT)
+  (close fake-arduino)
 
   (def identifier (port-identifier "/tmp/ttyFake0"))
   (def port (.open ^CommPortIdentifier identifier "clojure" 1))
   (.getBaudRate port)
   (def baudrate 115200)
-
   (def conn (ref {:port port :interface :firmata}))
-
   (doto port
     (.setSerialPortParams baudrate
                           SerialPort/DATABITS_8
@@ -319,8 +319,6 @@
                           SerialPort/PARITY_NONE)
     (.addEventListener (listener #(process-input conn (.getInputStream (:port @conn)))))
     (.notifyOnDataAvailable true))
-
   (write-bytes conn REPORT-VERSION)
-
   ;;
   )
