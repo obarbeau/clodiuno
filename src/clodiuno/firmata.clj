@@ -117,7 +117,7 @@
   (map #(bit-and (bit-shift-right n %) 1) (range 8)))
 
 (defn- numb [bits]
-  (int (java.math.BigInteger. ^String (apply str bits) ^int 2)))
+  (int (java.math.BigInteger. ^String (apply str bits) 2)))
 
 (defn- assoc-in! [r ks v]
   (dosync (alter r assoc-in ks v)))
@@ -306,19 +306,5 @@
   (pin-mode fake-arduino 0 OUTPUT)
   (pin-mode fake-arduino 10 OUTPUT)
   (close fake-arduino)
-
-  (def identifier (port-identifier "/tmp/ttyFake0"))
-  (def port (.open ^CommPortIdentifier identifier "clojure" 1))
-  (.getBaudRate port)
-  (def baudrate 115200)
-  (def conn (ref {:port port :interface :firmata}))
-  (doto port
-    (.setSerialPortParams baudrate
-                          SerialPort/DATABITS_8
-                          SerialPort/STOPBITS_1
-                          SerialPort/PARITY_NONE)
-    (.addEventListener (listener #(process-input conn (.getInputStream (:port @conn)))))
-    (.notifyOnDataAvailable true))
-  (write-bytes conn REPORT-VERSION)
   ;;
   )

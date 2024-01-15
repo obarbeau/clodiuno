@@ -11,7 +11,7 @@
                       :main-ns clodiuno.core
                       :version "0.0.4-SNAPSHOT"}}
   :usb-port {:jvm-opts [;;"-Dgnu.io.rxtx.SerialPorts=/dev/ttyACM0"
-                        "-Dgnu.io.rxtx.SerialPorts=/tmp/ttyFake0"
+                        "-Dgnu.io.rxtx.SerialPorts=/tmp/ttyFake0" ;; socat
                         ;; gnu.io.CommPortIdentifier
                         ;; requires /usr/lib/jni/librxtxSerial-<version>.so
                         "-Djava.library.path=/usr/lib/jni"
